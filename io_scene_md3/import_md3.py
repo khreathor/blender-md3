@@ -61,7 +61,7 @@ class MD3Importer:
         bpy.ops.object.add(type='EMPTY')
         tag = bpy.context.object
         tag.name = data.name
-        tag.empty_draw_type = 'ARROWS'
+        tag.empty_display_type = 'ARROWS'
         tag.rotation_mode = 'QUATERNION'
         tag.matrix_basis = get_tag_matrix_basis(data)
         return tag
