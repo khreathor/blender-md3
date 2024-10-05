@@ -180,8 +180,6 @@ class MD3Importer:
 
     def post_settings(self):
         self.scene.frame_set(0)
-        self.scene.game_settings.material_mode = 'GLSL'  # TODO: questionable
-        bpy.ops.object.lamp_add(type='SUN')  # TODO: questionable
 
     def __call__(self, filename):
         self.filename = filename
