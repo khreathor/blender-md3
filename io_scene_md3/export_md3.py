@@ -29,29 +29,35 @@ def get_textures(material):
                 textures.append(tex)
     return textures
 
+
+def return_single_mat(uv_maps,materials):
+    if len(uv_maps) == 1:
+        return uv_maps.active.name, materials[0]
+    elif len(uv_maps) > 1:
+        print('Warning: Multiple Shaders or/and UV maps found, only first will be chosen')
+        return uv_maps.active.name, materials[0]
+
+
 def gather_shader_info(mesh):
     'Returning uvmap name, texture name list'
     uv_maps = mesh.uv_layers
+    materials = [] 
+    for mat in mesh.materials:
+        materials.append(mat.name)
 
-    for material in mesh.materials:
-        textures = get_textures(material)
-        
-        for texture_slot in textures:
-            if (
-                texture_slot is None
-            ):
-                continue
-
-            # one UV map can be used by many textures
     if len(uv_maps) <= 0:
         print('Warning: No UV maps found, zero filling will be used')
         return None, []
-    elif len(uv_maps) == 1:
-        return uv_maps.active.name, [uv_maps.active]
-    else:
-        print('Warning: Multiple UV maps found, only one will be chosen')
-        return uv_maps.active.name, [uv_maps.active]
+    
+    if len(materials) <= 0:
+        print('Warning: No Materials found, zero filling will be used')
+        return None, []
 
+    if len(materials) == 1:
+        return return_single_mat(uv_maps,materials)
+    else:
+        print('Warning: Multiple Shaders found, only first will be chosen')
+        return return_single_mat(uv_maps,materials)
 
 def gather_vertices(mesh, uvmap_data=None):
     md3vert_to_loop_map = []
@@ -120,7 +126,7 @@ class MD3Exporter:
 
     def pack_surface_shader(self, i):
         return fmt.Shader.pack(
-            name=prepare_name(self.mesh_shader_list[i].name),
+            name=prepare_name(self.mesh_shader_list),
             index=i,
         )
 
