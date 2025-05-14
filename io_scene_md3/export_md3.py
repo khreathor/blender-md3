@@ -192,11 +192,15 @@ class MD3Exporter:
                     self.mesh_sk_abs = (a, b, (e - kblocks[a].frame) / (kblocks[b].frame - kblocks[a].frame))
 
     def pack_surface(self, surf_name):
+        self.scene.frame_set(self.scene.frame_start)
         obj = self.scene.objects[surf_name]
         bpy.context.view_layer.objects.active = obj
-        bpy.ops.object.modifier_add(type='TRIANGULATE')  # no 4-gons or n-gons
+        tris_mod = obj.modifiers.new(name="Triangulate", type='TRIANGULATE')  # no 4-gons or n-gons
+        tris_mod.quad_method = 'FIXED'
+        obj.update_from_editmode()
         dg = bpy.context.evaluated_depsgraph_get()
-        self.mesh = obj.to_mesh(preserve_all_data_layers=True, depsgraph=dg)
+        ob_eval = obj.evaluated_get(dg)
+        self.mesh = ob_eval.to_mesh()
 
         self.mesh_uvmap_name, self.mesh_shader_list = gather_shader_info(self.mesh)
         self.mesh_md3vert_to_loop, self.mesh_loop_to_md3vert = gather_vertices(
@@ -206,8 +210,6 @@ class MD3Exporter:
         nShaders = len(self.mesh_shader_list)
         nVerts = len(self.mesh_md3vert_to_loop)
         nTris = len(self.mesh.polygons)
-
-        self.scene.frame_set(self.scene.frame_start)
 
         f = OffsetBytesIO(start_offset=fmt.Surface.size)
         f.mark('offShaders')
@@ -226,6 +228,7 @@ class MD3Exporter:
 
         # release here, to_mesh used for every frame
         bpy.ops.object.modifier_remove(modifier=obj.modifiers[-1].name)
+        ob_eval.to_mesh_clear()
 
         print('Surface {}: nVerts={}{} nTris={}{} nShaders={}{}'.format(
             surf_name,
@@ -244,6 +247,7 @@ class MD3Exporter:
             nTris=nTris,
             **f.getoffsets()
         ) + f.getvalue()
+
 
     def get_frame_data(self, i):
         center = mathutils.Vector((0.0, 0.0, 0.0))
